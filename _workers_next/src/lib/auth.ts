@@ -76,6 +76,24 @@ async function resolveExistingGitHubUserIdByUsername(username?: string | null) {
     }
 }
 
+async function resolveExistingLinuxDoUserIdByUsername(username?: string | null) {
+    if (!username) return null
+    const normalizedUsername = username.trim().toLowerCase()
+    if (!normalizedUsername || normalizedUsername.startsWith("gh_")) return null
+
+    try {
+        const rows = await db
+            .select({ userId: loginUsers.userId })
+            .from(loginUsers)
+            .where(sql`LOWER(${loginUsers.username}) = ${normalizedUsername}`)
+            .orderBy(sql`COALESCE(${loginUsers.lastLoginAt}, 0) DESC`)
+            .limit(1)
+        return rows[0]?.userId ?? null
+    } catch {
+        return null
+    }
+}
+
 function normalizeGitHubUserId(rawId?: string | null) {
     if (!rawId) return null
     let normalized = String(rawId).trim()
@@ -322,6 +340,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         } else {
                             resolvedId = existingUserId
                         }
+                    }
+                } else if (account?.provider === "linuxdo") {
+                    const linuxDoProfileId = (profile as any)?.id
+                    if (linuxDoProfileId !== undefined && linuxDoProfileId !== null && String(linuxDoProfileId).trim() !== "") {
+                        resolvedId = String(linuxDoProfileId)
+                    }
+
+                    const existingLinuxDoUserId = await resolveExistingLinuxDoUserIdByUsername(resolvedUsername)
+                    if (existingLinuxDoUserId) {
+                        resolvedId = existingLinuxDoUserId
                     }
                 }
 
