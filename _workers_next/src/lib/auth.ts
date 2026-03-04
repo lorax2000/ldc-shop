@@ -49,6 +49,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     pages: {
         signIn: "/login"
     },
+    // Temporary diagnostics: keep this until OAuth callback issue is resolved.
+    logger: {
+        error(code, metadata) {
+            console.error("[auth-temp]", code, metadata)
+        },
+    },
     // Use OAUTH_CLIENT_SECRET as fallback if NEXTAUTH_SECRET is not set
     secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || process.env.OAUTH_CLIENT_SECRET,
     trustHost: true,
