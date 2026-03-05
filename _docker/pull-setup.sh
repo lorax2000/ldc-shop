@@ -90,7 +90,11 @@ generate_secret() {
 echo -e "${GREEN}━━━ 基础配置（必填）━━━${NC}"
 echo ""
 
-prompt APP_URL "站点 URL（含 https://）" "http://localhost:3000"
+prompt APP_URL "站点 URL（如 https://shop.example.com）" ""
+while [ -z "$APP_URL" ]; do
+    echo -e "${RED}站点 URL 不能为空，请输入你的域名（含 https://）${NC}"
+    prompt APP_URL "站点 URL（如 https://shop.example.com）" ""
+done
 prompt PORT "映射端口" "3000"
 
 echo ""
@@ -232,7 +236,6 @@ if [ "$DO_START" = "true" ]; then
     docker compose up -d
     echo ""
     echo -e "${GREEN}${BOLD}✓ LDC Shop 已启动！${NC}"
-    echo -e "  访问地址: ${BOLD}${APP_URL}${NC}"
     echo ""
 else
     echo ""
@@ -241,6 +244,36 @@ else
     echo "  docker compose pull && docker compose up -d"
     echo ""
 fi
+
+echo -e "${CYAN}━━━ 反向代理配置 ━━━${NC}"
+echo ""
+echo -e "  容器监听端口 ${BOLD}${PORT}${NC}，需要配置反向代理才能通过域名访问。"
+echo ""
+echo -e "  ${BOLD}Nginx 示例:${NC}"
+echo ""
+echo "    server {"
+echo "        listen 443 ssl;"
+echo "        server_name ${APP_URL#https://};"
+echo ""
+echo "        ssl_certificate     /path/to/cert.pem;"
+echo "        ssl_certificate_key /path/to/key.pem;"
+echo ""
+echo "        location / {"
+echo "            proxy_pass http://127.0.0.1:${PORT};"
+echo "            proxy_set_header Host \$host;"
+echo "            proxy_set_header X-Real-IP \$remote_addr;"
+echo "            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;"
+echo "            proxy_set_header X-Forwarded-Proto \$scheme;"
+echo "            proxy_set_header X-Forwarded-Host \$host;"
+echo "        }"
+echo "    }"
+echo ""
+echo -e "  ${BOLD}Caddy 示例（自动 HTTPS）:${NC}"
+echo ""
+echo "    ${APP_URL#https://} {"
+echo "        reverse_proxy localhost:${PORT}"
+echo "    }"
+echo ""
 
 echo -e "${CYAN}常用命令:${NC}"
 echo "  查看日志:   docker compose logs -f"

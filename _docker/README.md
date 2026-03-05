@@ -126,6 +126,23 @@ your-domain.com {
 
 ---
 
+## GitHub OAuth App 创建方法
+
+如需启用 GitHub 登录（作为 Linux DO Connect 的备用登录方式），按以下步骤创建 OAuth App：
+
+1. 访问 [GitHub Developer Settings](https://github.com/settings/developers)
+2. 点击 **New OAuth App**
+3. 填写信息：
+   - **Application name**: `LDC Shop`（任意名称）
+   - **Homepage URL**: `https://your-domain.com`（你的站点地址）
+   - **Authorization callback URL**: `https://your-domain.com/api/auth/callback/github`
+4. 点击 **Register application**
+5. 记录 **Client ID**，点击 **Generate a new client secret** 获取 **Client Secret**
+6. 将两个值填入 `.env` 文件的 `GITHUB_ID` 和 `GITHUB_SECRET`
+7. 重启容器生效：`docker compose down && docker compose up -d`
+
+---
+
 ## 数据持久化与备份
 
 SQLite 数据库文件存储在 `./data/ldc-shop.sqlite`，通过 Docker volume 挂载持久化。
